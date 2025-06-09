@@ -22,8 +22,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f conda.yaml ]; then pip install -r conda.yaml; fi
+          pip install -r conda.yaml || true
+          pip install mlflow pytest
 
       - name: Run tests
         run: |
@@ -53,12 +53,16 @@ jobs:
 
       - name: Build Docker image with MLflow
         run: |
-          latest_run=$(ls -t mlruns/0 | head -n 1)
-          mlflow models build-docker -m mlruns/0/$latest_run/artifacts/model -n mlflow-model
+          if [ -d "mlruns/0" ]; then
+            latest_run=$(ls -t mlruns/0 | head -n 1)
+            mlflow models build-docker -m mlruns/0/$latest_run/artifacts/model -n mlflow-model
+          else
+            echo "No MLflow run found. Skipping Docker build."
+            exit 1
+          fi
 
       - name: Push Docker image to Docker Hub
+        if: success()
         run: |
           docker tag mlflow-model:latest ${{ secrets.DOCKER_USERNAME }}/mlflow-model:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/mlflow-model:latest
-
-
