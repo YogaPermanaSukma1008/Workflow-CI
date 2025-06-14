@@ -110,6 +110,17 @@ with mlflow.start_run(run_name="RandomForest_Default") as run:
     log_roc_curve(y_test, probas)
 
     # Logging eksplisit model
-    mlflow.sklearn.log_model(model, artifact_path = "model")
+    # Tambahkan input_example & signature
+    from mlflow.models.signature import infer_signature
+    input_example = X_test.iloc[:5]
+    signature = infer_signature(X_test, model.predict(X_test))
+
+    # Logging eksplisit model
+    mlflow.sklearn.log_model(
+        sk_model=model,
+        artifact_path="model",
+        input_example=input_example,
+        signature=signature
+    )
 
 print("✅ Model dan metrik berhasil dilog ke DagsHub.")
