@@ -27,6 +27,7 @@ os.environ["MLFLOW_TRACKING_PASSWORD"] = mlflow_password
 mlflow.set_tracking_uri(MLFLOW_URI)
 mlflow.set_experiment("Default")
 
+# Jangan aktifkan log_models di autolog karena DagsHub belum dukung model registry
 mlflow.sklearn.autolog(log_models=False)
 
 # ========== 2. Load Data ==========
@@ -105,19 +106,15 @@ with mlflow.start_run(run_name="RandomForest_Default") as run:
     log_confusion_matrix(cm)
     log_roc_curve(y_test, probas)
 
-    # Logging model (hindari fitur baru yang tidak didukung DagsHub)
+    # Logging model (tanpa registered_model_name, agar tidak error)
     signature = infer_signature(X_test, preds)
     input_example = X_test.head(5)
 
-    # 🚫 Jangan gunakan Model.log (fitur baru)
-    # ✅ Gunakan log_model standar + artifact_path
     mlflow.sklearn.log_model(
         sk_model=model,
-        artifact_path="model",  # wajib untuk backend DagsHub
+        artifact_path="model",  # penting untuk mlflow artifacts download
         input_example=input_example,
         signature=signature
     )
 
 print("✅ Model dan metrik berhasil dilog ke DagsHub.")
-
-
