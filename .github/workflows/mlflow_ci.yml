@@ -17,7 +17,7 @@ jobs:
       - name: Set up Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          environment-file: loandata_preprocessing/conda.yaml  # ✅ Path diperbaiki
+          environment-file: MLProject/conda.yaml  # ✅ Path diperbaiki
           activate-environment: ml_env
           python-version: 3.12
           auto-activate-base: false
