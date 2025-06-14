@@ -12,19 +12,31 @@ from sklearn.metrics import (
     confusion_matrix, roc_auc_score, roc_curve
 )
 
+import argparse
+
+# Parsing parameter dari MLflow Project
+parser = argparse.ArgumentParser()
+parser.add_argument('--x_train_path', type=str, required=True)
+parser.add_argument('--y_train_path', type=str, required=True)
+parser.add_argument('--x_test_path', type=str, required=True)
+parser.add_argument('--y_test_path', type=str, required=True)
+args = parser.parse_args()
+
+
 # ========== 1. Setup MLflow dengan DagsHub ==========
-os.environ['MLFLOW_TRACKING_USERNAME'] = "YogaPermanaSukma1008"
-os.environ['MLFLOW_TRACKING_PASSWORD'] = "40dea981be77ab45c5501b0810cd96844a71a99a"
+os.environ['MLFLOW_TRACKING_USERNAME'] = os.getenv("MLFLOW_TRACKING_USERNAME")
+os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv("MLFLOW_TRACKING_PASSWORD")
 mlflow.set_tracking_uri("https://dagshub.com/YogaPermanaSukma1008/membangun-model.mlflow")
 
 # Aktifkan autolog
 mlflow.sklearn.autolog(log_models=True)
 
 # ========== 2. Load Data ==========
-X_train = pd.read_csv("loandata_preprocessing/X_train_processed.csv")
-X_test = pd.read_csv("loandata_preprocessing/X_test_processed.csv")
-y_train = pd.read_csv("loandata_preprocessing/y_train.csv")
-y_test = pd.read_csv("loandata_preprocessing/y_test.csv")
+# ========== 2. Load Data dari parameter path ==========
+X_train = pd.read_csv(args.x_train_path)
+X_test = pd.read_csv(args.x_test_path)
+y_train = pd.read_csv(args.y_train_path)
+y_test = pd.read_csv(args.y_test_path)
 
 y_train = y_train.values.ravel()
 y_test = y_test.values.ravel()
@@ -86,13 +98,6 @@ with mlflow.start_run(run_name="RandomForest_Default") as run:
     cm = confusion_matrix(y_test, preds)
 
     # Logging manual (melengkapi autolog)
-    mlflow.log_metric("manual_accuracy", acc)
-    mlflow.log_metric("manual_precision", prec)
-    mlflow.log_metric("manual_recall", rec)
-    mlflow.log_metric("manual_f1_score", f1)
-    mlflow.log_metric("manual_roc_auc", roc_auc)
-
-        # Logging manual (melengkapi autolog)
     mlflow.log_metric("manual_accuracy", acc)
     mlflow.log_metric("manual_precision", prec)
     mlflow.log_metric("manual_recall", rec)
