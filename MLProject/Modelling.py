@@ -21,7 +21,7 @@ mlflow_password = os.environ.get("MLFLOW_TRACKING_PASSWORD")
 os.environ["MLFLOW_TRACKING_USERNAME"] = mlflow_username
 os.environ["MLFLOW_TRACKING_PASSWORD"] = mlflow_password
 
-mlflow.set_tracking_uri("https://dagshub.com/YogaPermanaSukma1008/membangun-model.mlflow")
+mlflow.set_tracking_uri("file:./mlruns")
 
 # Aktifkan autolog
 mlflow.sklearn.autolog(log_models=True)
@@ -92,13 +92,6 @@ with mlflow.start_run(run_name="RandomForest_Default") as run:
     cm = confusion_matrix(y_test, preds)
 
     # Logging manual (melengkapi autolog)
-    mlflow.log_metric("manual_accuracy", acc)
-    mlflow.log_metric("manual_precision", prec)
-    mlflow.log_metric("manual_recall", rec)
-    mlflow.log_metric("manual_f1_score", f1)
-    mlflow.log_metric("manual_roc_auc", roc_auc)
-
-        # Logging manual (melengkapi autolog)
     mlflow.log_metric("manual_accuracy", acc)
     mlflow.log_metric("manual_precision", prec)
     mlflow.log_metric("manual_recall", rec)
