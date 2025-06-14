@@ -21,7 +21,7 @@ mlflow_password = os.environ.get("MLFLOW_TRACKING_PASSWORD")
 os.environ["MLFLOW_TRACKING_USERNAME"] = mlflow_username
 os.environ["MLFLOW_TRACKING_PASSWORD"] = mlflow_password
 
-mlflow.set_tracking_uri("file:///home/runner/work/Workflow-CI/Workflow-CI/mlruns")
+mlflow.set_tracking_uri("file:///C:/Users/LENOVO/Documents/GitHub/Membangun_model/mlruns")
 
 # Aktifkan autolog
 mlflow.sklearn.autolog(log_models=True)
