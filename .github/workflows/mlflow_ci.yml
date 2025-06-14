@@ -25,8 +25,8 @@ jobs:
       
       - name: 🔐 Set MLflow Credentials
         run: |
-          echo "MLFLOW_TRACKING_USERNAME=${{ secrets.MLFLOW_USERNAME }}" >> $GITHUB_ENV
-          echo "MLFLOW_TRACKING_PASSWORD=${{ secrets.MLFLOW_PASSWORD }}" >> $GITHUB_ENV
+          echo "MLFLOW_USERNAME=${{ secrets.MLFLOW_USERNAME }}" >> $GITHUB_ENV
+          echo "MLFLOW_PASSWORD=${{ secrets.MLFLOW_PASSWORD }}" >> $GITHUB_ENV
 
 
       - name: ✅ Run MLflow Project dan Simpan Run ID
@@ -60,7 +60,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: 🏗️ Build Docker image
-        shell : bash -1 {0}
+        shell : bash -l {0}
         run: |
           OUTPUT=$(mlflow run MLProject --env-manager=local)
           echo "$OUTPUT"
