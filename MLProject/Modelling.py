@@ -105,15 +105,17 @@ with mlflow.start_run(run_name="RandomForest_Default") as run:
     log_confusion_matrix(cm)
     log_roc_curve(y_test, probas)
 
-    # Log model
+    # Logging model (hindari fitur baru yang tidak didukung DagsHub)
     signature = infer_signature(X_test, preds)
     input_example = X_test.head(5)
 
+    # 🚫 Jangan gunakan Model.log (fitur baru)
+    # ✅ Gunakan log_model standar + artifact_path
     mlflow.sklearn.log_model(
         sk_model=model,
-        artifact_path="model",
-        signature=signature,
-        input_example=input_example
+        artifact_path="model",  # wajib untuk backend DagsHub
+        input_example=input_example,
+        signature=signature
     )
 
 print("✅ Model dan metrik berhasil dilog ke DagsHub.")
