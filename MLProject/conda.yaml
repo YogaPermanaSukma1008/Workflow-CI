@@ -1,17 +1,12 @@
-name: ml_env
+name: mlflow-env
 channels:
-  - conda-forge
   - defaults
 dependencies:
-  - python=3.12.*
+  - python=3.10
+  - pandas
+  - scikit-learn
   - pip
-  - numpy>=1.26.0          # Diperlukan oleh scikit-learn
-  - pandas>=2.1.0          # Diperlukan oleh seaborn
-  - scikit-learn=1.6.1
-  - seaborn=0.13.*
-  - pyarrow>=14.0.1        # Ditambahkan eksplisit dengan batasan versi
   - pip:
-      - mlflow==2.8.0
-      - cloudpickle==2.2.1     # Kompatibel dengan mlflow 2.8.0
-      - pytest>=8.0.0
-      - packaging>=23.0        # Diperlukan untuk manajemen paket modern
+      - mlflow
+      - matplotlib
+      - seaborn
