@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.11.3
+  - python=3.12.1
   - pip
   - scikit-learn=1.6.1
   - seaborn=0.13.2
