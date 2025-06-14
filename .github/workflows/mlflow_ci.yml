@@ -17,18 +17,18 @@ jobs:
       - name: Set up Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          environment-file: conda.yaml
+          environment-file: loandata_preprocessing/conda.yaml  # ✅ Path diperbaiki
           activate-environment: ml_env
           python-version: 3.12
           auto-activate-base: false
 
       - name: Run tests
-        shell: bash -l {0}  # penting agar conda environment aktif
+        shell: bash -l {0}  # ✅ Penting untuk mengaktifkan conda env
         run: |
           pytest || echo "Skipping tests due to errors"
 
       - name: Train model with MLflow
-        shell: bash -l {0}  # penting agar conda environment aktif
+        shell: bash -l {0}
         env:
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_USERNAME }}
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}
@@ -36,6 +36,7 @@ jobs:
           python MLProject/Modelling.py
 
       - name: Upload MLflow artifacts
+        if: success()  # ✅ Hanya upload jika berhasil
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-artifacts
@@ -53,7 +54,7 @@ jobs:
       - name: Build Docker image with MLflow
         shell: bash -l {0}
         run: |
-          if [ -d "mlruns/0" ]; then
+          if [ -d "mlruns/0" ] && [ "$(ls -A mlruns/0)" ]; then
             latest_run=$(ls -t mlruns/0 | head -n 1)
             mlflow models build-docker -m mlruns/0/$latest_run/artifacts/model -n mlflow-model
           else
