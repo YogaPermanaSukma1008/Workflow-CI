@@ -7,7 +7,11 @@ dependencies:
   - pip
   - scikit-learn=1.6.1
   - seaborn=0.13.*
+  - pyarrow>=14.0.1  # Explicitly added with version constraint
+  - numpy>=1.26.0  # Added as implicit dependency for scikit-learn
+  - pandas>=2.1.0  # Added as implicit dependency for seaborn
   - pip:
       - mlflow==2.8.0
-      - cloudpickle==2.2.1  # Changed to version compatible with mlflow
-      - pytest
+      - cloudpickle==2.2.1  # Version compatible with mlflow 2.8.0
+      - pytest>=8.0.0
+      - packaging>=23.0  # Required dependency for modern Python packages
