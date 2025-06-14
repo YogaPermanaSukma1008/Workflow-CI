@@ -19,8 +19,8 @@ jobs:
         with:
           environment-file: MLProject/conda.yaml
           activate-environment: ml_env
-          python-version: 3.12
           auto-activate-base: false
+          python-version: 3.12
 
       - name: Run tests
         shell: bash -l {0}
@@ -42,12 +42,19 @@ jobs:
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_USERNAME }}
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}
         run: |
-          run_id=$(curl -s -u $MLFLOW_TRACKING_USERNAME:$MLFLOW_TRACKING_PASSWORD \
+          response=$(curl -s -u "$MLFLOW_TRACKING_USERNAME:$MLFLOW_TRACKING_PASSWORD" \
             https://dagshub.com/api/2.0/mlflow/experiments/0/runs/search \
             -H "Content-Type: application/json" \
-            -d '{"max_results": 1}' | jq -r '.runs[0].info.run_id')
+            -d '{"max_results": 1}')
+          
+          run_id=$(echo "$response" | jq -r '.runs[0].info.run_id // empty')
 
-          echo "Latest Run ID: $run_id"
+          if [ -z "$run_id" ]; then
+            echo "❌ Run ID not found. Aborting."
+            exit 1
+          fi
+
+          echo "✅ Latest Run ID: $run_id"
           echo "RUN_ID=$run_id" >> $GITHUB_ENV
 
       - name: Download model artifact from DagsHub
