@@ -22,6 +22,7 @@ os.environ["MLFLOW_TRACKING_USERNAME"] = mlflow_username
 os.environ["MLFLOW_TRACKING_PASSWORD"] = mlflow_password
 
 mlflow.set_tracking_uri("https://dagshub.com/YogaPermanaSukma1008/membangun-model.mlflow")
+mlflow.set_experiment("Default")  # Bisa diganti
 
 # Aktifkan autolog
 mlflow.sklearn.autolog(log_models=True)
