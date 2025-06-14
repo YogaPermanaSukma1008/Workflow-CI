@@ -5,13 +5,13 @@ channels:
 dependencies:
   - python=3.12.*
   - pip
+  - numpy>=1.26.0          # Diperlukan oleh scikit-learn
+  - pandas>=2.1.0          # Diperlukan oleh seaborn
   - scikit-learn=1.6.1
   - seaborn=0.13.*
-  - pyarrow>=14.0.1  # Explicitly added with version constraint
-  - numpy>=1.26.0  # Added as implicit dependency for scikit-learn
-  - pandas>=2.1.0  # Added as implicit dependency for seaborn
+  - pyarrow>=14.0.1        # Ditambahkan eksplisit dengan batasan versi
   - pip:
       - mlflow==2.8.0
-      - cloudpickle==2.2.1  # Version compatible with mlflow 2.8.0
+      - cloudpickle==2.2.1     # Kompatibel dengan mlflow 2.8.0
       - pytest>=8.0.0
-      - packaging>=23.0  # Required dependency for modern Python packages
+      - packaging>=23.0        # Diperlukan untuk manajemen paket modern

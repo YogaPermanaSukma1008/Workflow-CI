@@ -7,7 +7,7 @@ flavors:
     loader_module: mlflow.sklearn
     model_path: model.pkl
     predict_fn: predict
-    python_version: 3.12.*  # Made more flexible
+    python_version: "3.12.*"  # Versi Python fleksibel
   sklearn:
     code: null
     pickled_model: model.pkl
@@ -20,26 +20,41 @@ model_uuid: 5186c902cc3b498bb7a7966864dd3c2e
 prompts: null
 run_id: 39d3c108e3044060acb40abfb74397d1
 signature:
-  inputs: '[{"type": "double", "name": "person_age", "required": true}, {"type": "double",
-    "name": "person_income", "required": true}, {"type": "double", "name": "person_emp_exp",
-    "required": true}, {"type": "double", "name": "loan_amnt", "required": true},
-    {"type": "double", "name": "loan_int_rate", "required": true}, {"type": "double",
-    "name": "loan_percent_income", "required": true}, {"type": "double", "name": "cb_person_cred_hist_length",
-    "required": true}, {"type": "double", "name": "credit_score", "required": true},
-    {"type": "double", "name": "person_education_Bachelor", "required": true}, {"type":
-    "double", "name": "person_education_Doctorate", "required": true}, {"type": "double",
-    "name": "person_education_High School", "required": true}, {"type": "double",
-    "name": "person_education_Master", "required": true}, {"type": "double", "name":
-    "person_home_ownership_OTHER", "required": true}, {"type": "double", "name": "person_home_ownership_OWN",
-    "required": true}, {"type": "double", "name": "person_home_ownership_RENT", "required":
-    true}, {"type": "double", "name": "loan_intent_EDUCATION", "required": true},
-    {"type": "double", "name": "loan_intent_HOMEIMPROVEMENT", "required": true}, {"type":
-    "double", "name": "loan_intent_MEDICAL", "required": true}, {"type": "double",
-    "name": "loan_intent_PERSONAL", "required": true}, {"type": "double", "name":
-    "loan_intent_VENTURE", "required": true}, {"type": "double", "name": "person_gender",
-    "required": true}, {"type": "double", "name": "previous_loan_defaults_on_file",
-    "required": true}]'
-  outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "int64", "shape": [-1]}}]'
+  inputs: |
+    [
+      {"name": "person_age", "type": "double", "required": true},
+      {"name": "person_income", "type": "double", "required": true},
+      {"name": "person_emp_exp", "type": "double", "required": true},
+      {"name": "loan_amnt", "type": "double", "required": true},
+      {"name": "loan_int_rate", "type": "double", "required": true},
+      {"name": "loan_percent_income", "type": "double", "required": true},
+      {"name": "cb_person_cred_hist_length", "type": "double", "required": true},
+      {"name": "credit_score", "type": "double", "required": true},
+      {"name": "person_education_Bachelor", "type": "double", "required": true},
+      {"name": "person_education_Doctorate", "type": "double", "required": true},
+      {"name": "person_education_High School", "type": "double", "required": true},
+      {"name": "person_education_Master", "type": "double", "required": true},
+      {"name": "person_home_ownership_OTHER", "type": "double", "required": true},
+      {"name": "person_home_ownership_OWN", "type": "double", "required": true},
+      {"name": "person_home_ownership_RENT", "type": "double", "required": true},
+      {"name": "loan_intent_EDUCATION", "type": "double", "required": true},
+      {"name": "loan_intent_HOMEIMPROVEMENT", "type": "double", "required": true},
+      {"name": "loan_intent_MEDICAL", "type": "double", "required": true},
+      {"name": "loan_intent_PERSONAL", "type": "double", "required": true},
+      {"name": "loan_intent_VENTURE", "type": "double", "required": true},
+      {"name": "person_gender", "type": "double", "required": true},
+      {"name": "previous_loan_defaults_on_file", "type": "double", "required": true}
+    ]
+  outputs: |
+    [
+      {
+        "type": "tensor",
+        "tensor-spec": {
+          "dtype": "int64",
+          "shape": [-1]
+        }
+      }
+    ]
   params: null
 type_hint_from_example: false
 utc_time_created: '2025-06-09 06:03:44.980334'
