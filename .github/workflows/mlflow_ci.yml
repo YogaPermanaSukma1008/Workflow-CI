@@ -17,13 +17,13 @@ jobs:
       - name: Set up Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          environment-file: MLProject/conda.yaml  # ✅ Path diperbaiki
+          environment-file: MLProject/conda.yaml
           activate-environment: ml_env
           python-version: 3.12
           auto-activate-base: false
 
       - name: Run tests
-        shell: bash -l {0}  # ✅ Penting untuk mengaktifkan conda env
+        shell: bash -l {0}
         run: |
           pytest || echo "Skipping tests due to errors"
 
@@ -35,12 +35,32 @@ jobs:
         run: |
           python MLProject/Modelling.py
 
-      - name: Upload MLflow artifacts
-        if: success()  # ✅ Hanya upload jika berhasil
-        uses: actions/upload-artifact@v4
-        with:
-          name: mlflow-artifacts
-          path: mlruns/
+      - name: Get latest run ID from DagsHub
+        id: get_run_id
+        shell: bash
+        env:
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}
+        run: |
+          run_id=$(curl -s -u $MLFLOW_TRACKING_USERNAME:$MLFLOW_TRACKING_PASSWORD \
+            https://dagshub.com/api/2.0/mlflow/experiments/0/runs/search \
+            -H "Content-Type: application/json" \
+            -d '{"max_results": 1}' | jq -r '.runs[0].info.run_id')
+
+          echo "Latest Run ID: $run_id"
+          echo "RUN_ID=$run_id" >> $GITHUB_ENV
+
+      - name: Download model artifact from DagsHub
+        shell: bash -l {0}
+        env:
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}
+        run: |
+          mlflow artifacts download \
+            -u https://dagshub.com/YogaPermanaSukma1008/membangun-model.mlflow \
+            -r $RUN_ID \
+            -a model \
+            -d downloaded_model
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -54,13 +74,7 @@ jobs:
       - name: Build Docker image with MLflow
         shell: bash -l {0}
         run: |
-          if [ -d "mlruns/0" ] && [ "$(ls -A mlruns/0)" ]; then
-            latest_run=$(ls -t mlruns/0 | head -n 1)
-            mlflow models build-docker -m mlruns/0/$latest_run/artifacts/model -n mlflow-model
-          else
-            echo "No MLflow run found. Skipping Docker build."
-            exit 1
-          fi
+          mlflow models build-docker -m downloaded_model -n mlflow-model
 
       - name: Push Docker image to Docker Hub
         if: success()
