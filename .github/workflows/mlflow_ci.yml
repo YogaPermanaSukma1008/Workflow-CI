@@ -22,6 +22,12 @@ jobs:
           activate-environment: mlflow-env
           auto-activate-base: false
           use-mamba: true
+      
+      - name: 🔐 Set MLflow Credentials
+        run: |
+          echo "MLFLOW_TRACKING_USERNAME=${{ secrets.MLFLOW_USERNAME }}" >> $GITHUB_ENV
+          echo "MLFLOW_TRACKING_PASSWORD=${{ secrets.MLFLOW_PASSWORD }}" >> $GITHUB_ENV
+
 
       - name: ✅ Run MLflow Project dan Simpan Run ID
         id: mlflow-run

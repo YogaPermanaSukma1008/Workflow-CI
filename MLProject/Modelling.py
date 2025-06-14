@@ -15,14 +15,14 @@ from mlflow.models.signature import infer_signature
 
 # ========== 1. Setup MLflow dengan DagsHub ==========
 MLFLOW_URI = "https://dagshub.com/YogaPermanaSukma1008/membangun-model.mlflow"
-mlflow_username = os.environ.get("MLFLOW_TRACKING_USERNAME")
-mlflow_password = os.environ.get("MLFLOW_TRACKING_PASSWORD")
+mlflow_username = os.environ.get("MLFLOW_USERNAME")
+mlflow_password = os.environ.get("MLFLOW_PASSWORD")
 
 if not mlflow_username or not mlflow_password:
     raise ValueError("❌ MLFLOW credentials not found in environment.")
 
-os.environ["MLFLOW_TRACKING_USERNAME"] = mlflow_username
-os.environ["MLFLOW_TRACKING_PASSWORD"] = mlflow_password
+os.environ["MLFLOW_USERNAME"] = mlflow_username
+os.environ["MLFLOW_PASSWORD"] = mlflow_password
 
 mlflow.set_tracking_uri(MLFLOW_URI)
 mlflow.set_experiment("Default")
