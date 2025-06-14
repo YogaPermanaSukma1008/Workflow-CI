@@ -80,7 +80,7 @@ def log_roc_curve(y_true, y_probs):
 
 # ========== 5. Training dan Logging ==========
 with mlflow.start_run(run_name="RandomForest_Default") as run:
-    print(f"🎯 MLflow Run ID: {run.info.run_id}")
+    print(f"Run ID: {run.info.run_id}")
 
     model = RandomForestClassifier(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)

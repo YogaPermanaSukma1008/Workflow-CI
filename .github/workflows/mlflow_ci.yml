@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   train-and-deploy:
@@ -22,19 +23,20 @@ jobs:
           auto-activate-base: false
           use-mamba: true
 
-      - name: ✅ Run MLflow Project
+      - name: ✅ Run MLflow Project dan Simpan Run ID
         shell: bash -l {0}
         run: |
-          mlflow run MLProject --no-conda
+          RUN_ID=$(mlflow run MLProject --no-conda | tee /dev/tty | grep -oP '(?<=Run ID: )[a-f0-9]+')
+          echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
       - name: 📦 Save Model Artifact
         if: success()
         run: |
           mkdir -p model_artifact
-          cp -r ./mlruns ./model_artifact/
+          cp -r MLProject/mlruns model_artifact/
 
       - name: 📤 Upload Artifacts to GitHub
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: trained-model
           path: model_artifact
@@ -49,9 +51,11 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: 🏗️ Build Docker image
-        shell: bash -l {0}
         run: |
-          mlflow models build-docker -m ./mlruns/0/*/artifacts/model --enable-mlserver -n mlflow-model
+          mlflow models build-docker \
+            -m MLProject/mlruns/0/${{ env.MLFLOW_RUN_ID }}/artifacts/model \
+            --enable-mlserver \
+            -n mlflow-model
 
       - name: 📤 Push Docker Image
         run: |
