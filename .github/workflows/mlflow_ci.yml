@@ -37,7 +37,7 @@ jobs:
           python MLProject/Modelling.py
 
       - name: Upload MLflow artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # <- versi diperbarui
         with:
           name: mlflow-artifacts
           path: mlruns/
