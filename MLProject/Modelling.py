@@ -13,8 +13,14 @@ from sklearn.metrics import (
 )
 
 # ========== 1. Setup MLflow dengan DagsHub ==========
-os.environ['MLFLOW_TRACKING_USERNAME'] = "YogaPermanaSukma1008"
-os.environ['MLFLOW_TRACKING_PASSWORD'] = "40dea981be77ab45c5501b0810cd96844a71a99a"
+# Ambil kredensial dari environment variable (disediakan oleh GitHub Actions)
+mlflow_username = os.environ.get("MLFLOW_TRACKING_USERNAME")
+mlflow_password = os.environ.get("MLFLOW_TRACKING_PASSWORD")
+
+# Set kredensial ke environment (jika dibutuhkan oleh MLflow secara eksplisit)
+os.environ["MLFLOW_TRACKING_USERNAME"] = mlflow_username
+os.environ["MLFLOW_TRACKING_PASSWORD"] = mlflow_password
+
 mlflow.set_tracking_uri("https://dagshub.com/YogaPermanaSukma1008/membangun-model.mlflow")
 
 # Aktifkan autolog
