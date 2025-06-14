@@ -22,20 +22,23 @@ jobs:
           auto-activate-base: false
           python-version: 3.12
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          pip install mlflow[extras]  # docker, sklearn, requests
 
       - name: Run tests
         shell: bash -l {0}
         run: |
-          pytest || echo "Skipping tests due to errors"
+          pytest || echo "⚠️ Skipping tests due to errors"
 
-      - name: Train model with MLflow
+      - name: Train model with MLflow and log to DagsHub
         shell: bash -l {0}
         env:
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_USERNAME }}
-          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}  # Token here
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}
         run: |
+          export MLFLOW_TRACKING_URI=https://dagshub.com/YogaPermanaSukma1008/membangun-model.mlflow
           python MLProject/Modelling.py
 
       - name: Get latest run ID from DagsHub
@@ -47,7 +50,7 @@ jobs:
         run: |
           echo "🔎 Getting latest MLflow run ID..."
           response=$(curl -s -u "$MLFLOW_TRACKING_USERNAME:$MLFLOW_TRACKING_PASSWORD" \
-            https://dagshub.com/api/2.0/mlflow/experiments/0/runs/search \
+            https://dagshub.com/api/v1/mlflow/YogaPermanaSukma1008/membangun-model.mlflow/api/2.0/mlflow/runs/search \
             -H "Content-Type: application/json" \
             -d '{"max_results": 1}')
 
@@ -71,10 +74,10 @@ jobs:
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}
         run: |
           echo "📥 Downloading model artifact from DagsHub..."
+          export MLFLOW_TRACKING_URI=https://dagshub.com/YogaPermanaSukma1008/membangun-model.mlflow
           mlflow artifacts download \
-            -u https://dagshub.com/YogaPermanaSukma1008/membangun-model.mlflow \
-            -r $RUN_ID \
-            -a model \
+            --run-id $RUN_ID \
+            --artifact-path model \
             -d downloaded_model
 
       - name: Verify downloaded model
@@ -95,10 +98,10 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "🐳 Building Docker image from MLflow model..."
-          mlflow models build-docker -m downloaded_model -n mlflow-model
+          mlflow models build-docker -m downloaded_model
 
       - name: Push Docker image to Docker Hub
         if: success()
         run: |
-          docker tag mlflow-model:latest ${{ secrets.DOCKER_USERNAME }}/mlflow-model:latest
+          docker tag mlflow-pyfunc:latest ${{ secrets.DOCKER_USERNAME }}/mlflow-model:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/mlflow-model:latest
