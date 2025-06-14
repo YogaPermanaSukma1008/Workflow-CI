@@ -24,9 +24,12 @@ jobs:
           use-mamba: true
 
       - name: ✅ Run MLflow Project dan Simpan Run ID
+        id: mlflow-run
         shell: bash -l {0}
         run: |
-          RUN_ID=$(mlflow run MLProject --no-conda | tee /dev/tty | grep -oP '(?<=Run ID: )[a-f0-9]+')
+          OUTPUT=$(mlflow run MLProject --env-manager=local)
+          echo "$OUTPUT"
+          RUN_ID=$(echo "$OUTPUT" | grep -oP '(?<=Run ID: )[a-f0-9]+')
           echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
       - name: 📦 Save Model Artifact
@@ -51,11 +54,12 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: 🏗️ Build Docker image
+        shell : bash -1 {0}
         run: |
-          mlflow models build-docker \
-            -m MLProject/mlruns/0/${{ env.MLFLOW_RUN_ID }}/artifacts/model \
-            --enable-mlserver \
-            -n mlflow-model
+          OUTPUT=$(mlflow run MLProject --env-manager=local)
+          echo "$OUTPUT"
+          RUN_ID=$(echo "$OUTPUT" | grep -oP '(?<=Run ID: )[a-f0-9]+')
+          echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
       - name: 📤 Push Docker Image
         run: |
