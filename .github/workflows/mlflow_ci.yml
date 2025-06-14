@@ -45,7 +45,7 @@ jobs:
                         -P y_test_path=loandata_preprocessing/y_test.csv
 
       - name: Upload MLflow artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mlflow-artifacts
           path: mlruns/
