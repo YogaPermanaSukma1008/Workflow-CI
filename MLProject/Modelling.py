@@ -11,21 +11,20 @@ from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     confusion_matrix, roc_auc_score, roc_curve
 )
+from mlflow.models.signature import infer_signature
 
 # ========== 1. Setup MLflow dengan DagsHub ==========
-# Ambil kredensial dari environment variable (disediakan oleh GitHub Actions)
 mlflow_username = os.environ.get("MLFLOW_TRACKING_USERNAME")
 mlflow_password = os.environ.get("MLFLOW_TRACKING_PASSWORD")
 
-# Set kredensial ke environment (jika dibutuhkan oleh MLflow secara eksplisit)
 os.environ["MLFLOW_TRACKING_USERNAME"] = mlflow_username
 os.environ["MLFLOW_TRACKING_PASSWORD"] = mlflow_password
 
 mlflow.set_tracking_uri("https://dagshub.com/YogaPermanaSukma1008/membangun-model.mlflow")
-mlflow.set_experiment("Default")  # Bisa diganti
+mlflow.set_experiment("Default")
 
-# Aktifkan autolog
-mlflow.sklearn.autolog(log_models=True)
+# Hindari autolog jika menyebabkan error, bisa dinonaktifkan atau pakai versi MLflow < 2.12
+mlflow.sklearn.autolog(log_models=False)
 
 # ========== 2. Load Data ==========
 X_train = pd.read_csv("MLProject/loandata_preprocessing/X_train_processed.csv")
@@ -74,53 +73,45 @@ def log_roc_curve(y_true, y_probs):
 
 # ========== 5. Mulai MLflow run ==========
 with mlflow.start_run(run_name="RandomForest_Default") as run:
-    print(f"Run ID: {run.info.run_id}")  # Debug run ID
+    print(f"Run ID: {run.info.run_id}")
 
-    # Inisialisasi dan training model
+    # Model training
     model = RandomForestClassifier(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
 
-    # Prediksi
     preds = model.predict(X_test)
-    probas = model.predict_proba(X_test)[:, 1]  # Probabilitas untuk kelas 1
+    probas = model.predict_proba(X_test)[:, 1]
 
     # Evaluasi
     acc = accuracy_score(y_test, preds)
-    prec = precision_score(y_test, preds, average='binary', zero_division=0)
-    rec = recall_score(y_test, preds, average='binary', zero_division=0)
-    f1 = f1_score(y_test, preds, average='binary', zero_division=0)
+    prec = precision_score(y_test, preds, zero_division=0)
+    rec = recall_score(y_test, preds, zero_division=0)
+    f1 = f1_score(y_test, preds, zero_division=0)
     roc_auc = roc_auc_score(y_test, probas)
     cm = confusion_matrix(y_test, preds)
 
-    # Logging manual (melengkapi autolog)
-    mlflow.log_metric("manual_accuracy", acc)
-    mlflow.log_metric("manual_precision", prec)
-    mlflow.log_metric("manual_recall", rec)
-    mlflow.log_metric("manual_f1_score", f1)
-    mlflow.log_metric("manual_roc_auc", roc_auc)
-
-    # Logging eksplisit (untuk ditampilkan di MLflow dashboard)
+    # Log metrik
     mlflow.log_metric("accuracy", acc)
     mlflow.log_metric("precision", prec)
     mlflow.log_metric("recall", rec)
     mlflow.log_metric("f1_score", f1)
+    mlflow.log_metric("roc_auc", roc_auc)
 
     # Log artefak visual
     log_confusion_matrix(cm)
     log_roc_curve(y_test, probas)
 
-    # Logging eksplisit model
-    # Tambahkan input_example & signature
-    from mlflow.models.signature import infer_signature
-    input_example = X_test.iloc[:5]
-    signature = infer_signature(X_test, model.predict(X_test))
+    # Signature & Input Example
+    signature = infer_signature(X_test, preds)
+    input_example = X_test.head(5)
 
-    # Logging eksplisit model
+    # Logging model
     mlflow.sklearn.log_model(
         sk_model=model,
         artifact_path="model",
-        input_example=input_example,
-        signature=signature
+        signature=signature,
+        input_example=input_example
     )
 
 print("✅ Model dan metrik berhasil dilog ke DagsHub.")
+
