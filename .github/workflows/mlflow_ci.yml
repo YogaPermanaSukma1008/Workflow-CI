@@ -22,6 +22,9 @@ jobs:
           auto-activate-base: false
           python-version: 3.12
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Run tests
         shell: bash -l {0}
         run: |
@@ -31,7 +34,7 @@ jobs:
         shell: bash -l {0}
         env:
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_USERNAME }}
-          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}  # Token here
         run: |
           python MLProject/Modelling.py
 
@@ -42,11 +45,15 @@ jobs:
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_USERNAME }}
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}
         run: |
+          echo "🔎 Getting latest MLflow run ID..."
           response=$(curl -s -u "$MLFLOW_TRACKING_USERNAME:$MLFLOW_TRACKING_PASSWORD" \
             https://dagshub.com/api/2.0/mlflow/experiments/0/runs/search \
             -H "Content-Type: application/json" \
             -d '{"max_results": 1}')
-          
+
+          echo "📦 Response:"
+          echo "$response"
+
           run_id=$(echo "$response" | jq -r '.runs[0].info.run_id // empty')
 
           if [ -z "$run_id" ]; then
@@ -63,11 +70,17 @@ jobs:
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_USERNAME }}
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_PASSWORD }}
         run: |
+          echo "📥 Downloading model artifact from DagsHub..."
           mlflow artifacts download \
             -u https://dagshub.com/YogaPermanaSukma1008/membangun-model.mlflow \
             -r $RUN_ID \
             -a model \
             -d downloaded_model
+
+      - name: Verify downloaded model
+        run: |
+          echo "📁 Listing contents of downloaded model directory:"
+          ls -R downloaded_model
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -81,6 +94,7 @@ jobs:
       - name: Build Docker image with MLflow
         shell: bash -l {0}
         run: |
+          echo "🐳 Building Docker image from MLflow model..."
           mlflow models build-docker -m downloaded_model -n mlflow-model
 
       - name: Push Docker image to Docker Hub
