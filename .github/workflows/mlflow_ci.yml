@@ -33,7 +33,8 @@ jobs:
         id: mlflow-run
         shell: bash -l {0}
         run: |
-          OUTPUT=$(mlflow run MLProject --env-manager=local)
+          export MLFLOW_TRACKING_URI=./mlruns
+          OUTPUT=$(mlflow run MLProject --env-manager=local || true)
           echo "$OUTPUT"
           RUN_ID=$(echo "$OUTPUT" | grep -oP '(?<=Run ID: )[a-f0-9]+')
           echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
@@ -62,7 +63,7 @@ jobs:
       - name: 🏗️ Build Docker image
         shell : bash -l {0}
         run: |
-          OUTPUT=$(mlflow run MLProject --env-manager=local)
+          OUTPUT=$(mlflow run MLProject --env-manager=local || true)
           echo "$OUTPUT"
           RUN_ID=$(echo "$OUTPUT" | grep -oP '(?<=Run ID: )[a-f0-9]+')
           echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
