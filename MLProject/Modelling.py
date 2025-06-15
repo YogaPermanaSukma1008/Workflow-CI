@@ -97,7 +97,7 @@ with mlflow.start_run(run_name="RandomForest_Classifier") as run:
 
     # Model Logging (again, to register manually if needed)
     signature = infer_signature(X_test, preds)
-    mlflow.sklearn.log_model(model, "model", signature=signature, input_example=X_test.head())
+    mlflow.sklearn.log_model(model, "model")
 
     # Save model locally
     os.makedirs("output", exist_ok=True)
