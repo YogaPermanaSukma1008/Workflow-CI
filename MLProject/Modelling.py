@@ -14,8 +14,7 @@ from sklearn.metrics import (
 from mlflow.models.signature import infer_signature
 from mlflow.exceptions import MlflowException
 
-# ========== 1. Setup MLflow ==========
-
+# ========== 1. Setup MLflow dengan DagsHub ==========
 MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlruns")
 mlflow.set_tracking_uri(MLFLOW_URI)
 
@@ -23,11 +22,10 @@ mlflow_username = os.environ.get("MLFLOW_USERNAME")
 mlflow_password = os.environ.get("MLFLOW_PASSWORD")
 
 if not mlflow_username or not mlflow_password:
-    print("⚠️ MLFLOW credentials not found. Melanjutkan dengan tracking lokal...")
-    mlflow.set_tracking_uri("file:///tmp/mlruns")
-else:
-    os.environ["MLFLOW_USERNAME"] = mlflow_username
-    os.environ["MLFLOW_PASSWORD"] = mlflow_password
+    raise ValueError("❌ MLFLOW_USERNAME dan MLFLOW_PASSWORD belum diset. Pastikan secrets disediakan di GitHub Actions.")
+
+os.environ["MLFLOW_USERNAME"] = mlflow_username
+os.environ["MLFLOW_PASSWORD"] = mlflow_password
 
 mlflow.set_experiment("Default")
 mlflow.sklearn.autolog(log_models=False)
@@ -82,42 +80,55 @@ def log_roc_curve(y_true, y_probs):
 
 # ========== 5. Training dan Logging ==========
 try:
-    with mlflow.start_run(run_name="RandomForest_Default") as run:
-        print(f"🚀 Run dimulai. ID: {run.info.run_id}")
+    run_id_env = os.getenv("MLFLOW_RUN_ID")
+    if run_id_env:
+        run = mlflow.start_run(run_id=run_id_env)
+        print(f"🔁 Melanjutkan run dengan ID: {run_id_env}")
+    else:
+        run = mlflow.start_run(run_name="RandomForest_Default")
+        print(f"🚀 Run baru dimulai. ID: {run.info.run_id}")
 
-        model = RandomForestClassifier(n_estimators=100, random_state=42)
-        model.fit(X_train, y_train)
+    # Simpan run ID ke file (berguna untuk job GitHub Actions selanjutnya)
+    with open("mlflow_run_id.txt", "w") as f:
+        f.write(run.info.run_id)
 
-        preds = model.predict(X_test)
-        probas = model.predict_proba(X_test)[:, 1]
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
 
-        acc = accuracy_score(y_test, preds)
-        prec = precision_score(y_test, preds, zero_division=0)
-        rec = recall_score(y_test, preds, zero_division=0)
-        f1 = f1_score(y_test, preds, zero_division=0)
-        roc_auc = roc_auc_score(y_test, probas)
-        cm = confusion_matrix(y_test, preds)
+    preds = model.predict(X_test)
+    probas = model.predict_proba(X_test)[:, 1]
 
-        mlflow.log_metric("accuracy", acc)
-        mlflow.log_metric("precision", prec)
-        mlflow.log_metric("recall", rec)
-        mlflow.log_metric("f1_score", f1)
-        mlflow.log_metric("roc_auc", roc_auc)
+    acc = accuracy_score(y_test, preds)
+    prec = precision_score(y_test, preds, zero_division=0)
+    rec = recall_score(y_test, preds, zero_division=0)
+    f1 = f1_score(y_test, preds, zero_division=0)
+    roc_auc = roc_auc_score(y_test, probas)
+    cm = confusion_matrix(y_test, preds)
 
-        log_confusion_matrix(cm)
-        log_roc_curve(y_test, probas)
+    mlflow.log_metric("accuracy", acc)
+    mlflow.log_metric("precision", prec)
+    mlflow.log_metric("recall", rec)
+    mlflow.log_metric("f1_score", f1)
+    mlflow.log_metric("roc_auc", roc_auc)
 
-        signature = infer_signature(X_test, preds)
-        input_example = X_test.head(5)
+    log_confusion_matrix(cm)
+    log_roc_curve(y_test, probas)
 
-        mlflow.sklearn.log_model(
-            sk_model=model,
-            artifact_path="model",
-            input_example=input_example,
-            signature=signature
-        )
+    signature = infer_signature(X_test, preds)
+    input_example = X_test.head(5)
 
-        print("✅ Model dan metrik berhasil dilog.")
+    mlflow.sklearn.log_model(
+        sk_model=model,
+        artifact_path="model",
+        input_example=input_example,
+        signature=signature
+    )
+
+    print("✅ Model dan metrik berhasil dilog.")
+
+    mlflow.end_run()
+
 except MlflowException as e:
     print(f"❌ Terjadi error saat MLflow run: {e}")
+    raise
 
