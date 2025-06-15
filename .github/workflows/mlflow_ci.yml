@@ -56,7 +56,7 @@ jobs:
           DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
-          python modelling.py
+          python Modelling.py
 
       - name: 🧾 Get latest MLflow run_id
         working-directory: ./MLProject
