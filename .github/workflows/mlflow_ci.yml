@@ -39,6 +39,11 @@ jobs:
           RUN_ID=$(echo "$OUTPUT" | grep -oP '(?<=Run ID: )[a-f0-9]+')
           echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
+          if echo "$OUTPUT" | grep -q "Gagal koneksi ke DagsHub"; then
+          echo "::warning::MLflow run had issues (e.g. DagsHub), but continuing anyway"
+          exit 0
+          fi
+
       - name: 📦 Save Model Artifact
         if: success()
         run: |
