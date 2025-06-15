@@ -14,32 +14,21 @@ from sklearn.metrics import (
 from mlflow.models.signature import infer_signature
 from mlflow.exceptions import MlflowException
 
-# ========== 1. Setup MLflow dengan DagsHub ==========
+# ========== 1. Setup MLflow ==========
+
 MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlruns")
 mlflow.set_tracking_uri(MLFLOW_URI)
+
 mlflow_username = os.environ.get("MLFLOW_USERNAME")
 mlflow_password = os.environ.get("MLFLOW_PASSWORD")
 
 if not mlflow_username or not mlflow_password:
     print("⚠️ MLFLOW credentials not found. Melanjutkan dengan tracking lokal...")
     mlflow.set_tracking_uri("file:///tmp/mlruns")
-    mlflow.set_experiment("Default")
-    run = mlflow.start_run(run_name="RandomForest_Default")
-    print(f"📁 Run ID (lokal): {run.info.run_id}")
 else:
     os.environ["MLFLOW_USERNAME"] = mlflow_username
     os.environ["MLFLOW_PASSWORD"] = mlflow_password
 
-    mlflow.set_tracking_uri(MLFLOW_URI)
-    mlflow.set_experiment("Default")
-    run = mlflow.start_run(run_name="RandomForest_Default")
-    print(f"✅ Tracking ke DagsHub berhasil. Run ID: {run.info.run_id}")
-
-
-os.environ["MLFLOW_USERNAME"] = mlflow_username
-os.environ["MLFLOW_PASSWORD"] = mlflow_password
-
-mlflow.set_tracking_uri(MLFLOW_URI)
 mlflow.set_experiment("Default")
 mlflow.sklearn.autolog(log_models=False)
 
@@ -93,52 +82,42 @@ def log_roc_curve(y_true, y_probs):
 
 # ========== 5. Training dan Logging ==========
 try:
-    try:
-        run = mlflow.start_run(run_name="RandomForest_Default")
-        print(f"✅ Tracking ke DagsHub berhasil. Run ID: {run.info.run_id}")
-    except MlflowException as e:
-        print(f"⚠️ Gagal koneksi ke DagsHub: {e}")
-        print("⏪ Beralih ke tracking lokal.")
-        mlflow.set_tracking_uri("file:///tmp/mlruns")
-        mlflow.set_experiment("Default")
-        run = mlflow.start_run(run_name="RandomForest_Default")
-        print(f"📁 Run ID (lokal): {run.info.run_id}")
+    with mlflow.start_run(run_name="RandomForest_Default") as run:
+        print(f"🚀 Run dimulai. ID: {run.info.run_id}")
 
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
+        model = RandomForestClassifier(n_estimators=100, random_state=42)
+        model.fit(X_train, y_train)
 
-    preds = model.predict(X_test)
-    probas = model.predict_proba(X_test)[:, 1]
+        preds = model.predict(X_test)
+        probas = model.predict_proba(X_test)[:, 1]
 
-    acc = accuracy_score(y_test, preds)
-    prec = precision_score(y_test, preds, zero_division=0)
-    rec = recall_score(y_test, preds, zero_division=0)
-    f1 = f1_score(y_test, preds, zero_division=0)
-    roc_auc = roc_auc_score(y_test, probas)
-    cm = confusion_matrix(y_test, preds)
+        acc = accuracy_score(y_test, preds)
+        prec = precision_score(y_test, preds, zero_division=0)
+        rec = recall_score(y_test, preds, zero_division=0)
+        f1 = f1_score(y_test, preds, zero_division=0)
+        roc_auc = roc_auc_score(y_test, probas)
+        cm = confusion_matrix(y_test, preds)
 
-    # Logging metrics
-    mlflow.log_metric("accuracy", acc)
-    mlflow.log_metric("precision", prec)
-    mlflow.log_metric("recall", rec)
-    mlflow.log_metric("f1_score", f1)
-    mlflow.log_metric("roc_auc", roc_auc)
+        mlflow.log_metric("accuracy", acc)
+        mlflow.log_metric("precision", prec)
+        mlflow.log_metric("recall", rec)
+        mlflow.log_metric("f1_score", f1)
+        mlflow.log_metric("roc_auc", roc_auc)
 
-    # Logging visual artifacts
-    log_confusion_matrix(cm)
-    log_roc_curve(y_test, probas)
+        log_confusion_matrix(cm)
+        log_roc_curve(y_test, probas)
 
-    # Logging model
-    signature = infer_signature(X_test, preds)
-    input_example = X_test.head(5)
+        signature = infer_signature(X_test, preds)
+        input_example = X_test.head(5)
 
-    mlflow.sklearn.log_model(
-        sk_model=model,
-        artifact_path="model",
-        input_example=input_example,
-        signature=signature
-    )
+        mlflow.sklearn.log_model(
+            sk_model=model,
+            artifact_path="model",
+            input_example=input_example,
+            signature=signature
+        )
 
-    print("✅ Model dan metrik berhasil dilog.")
-finally:
-    mlflow.end_run()
+        print("✅ Model dan metrik berhasil dilog.")
+except MlflowException as e:
+    print(f"❌ Terjadi error saat MLflow run: {e}")
+
