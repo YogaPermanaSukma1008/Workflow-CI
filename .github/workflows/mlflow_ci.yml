@@ -27,28 +27,17 @@ jobs:
       - name: 📦 Install dependencies
         run: |
           pip install --upgrade pip
-          pip install pandas numpy scikit-learn mlflow matplotlib seaborn joblib
+          pip install pandas numpy scikit-learn mlflow matplotlib seaborn joblib gdown
 
-      - name: ⚙️ Prepare loandata & directory
+      - name: ⚙️ Download Data from Gdrive
         working-directory: ./MLProject
         run: |
           mkdir -p loandata_preprocessing models
 
-          echo "feature1,feature2,feature3" > loandata_preprocessing/X_train_processed.csv
-          echo "1.0,2.0,3.0" >> loandata_preprocessing/X_train_processed.csv
-          echo "4.0,5.0,6.0" >> loandata_preprocessing/X_train_processed.csv
-
-          echo "feature1,feature2,feature3" > loandata_preprocessing/X_test_processed.csv
-          echo "1.5,2.5,3.5" >> loandata_preprocessing/X_test_processed.csv
-          echo "4.5,5.5,6.5" >> loandata_preprocessing/X_test_processed.csv
-
-          echo "target" > loandata_preprocessing/y_train.csv
-          echo "0" >> loandata_preprocessing/y_train.csv
-          echo "1" >> loandata_preprocessing/y_train.csv
-
-          echo "target" > loandata_preprocessing/y_test.csv
-          echo "0" >> loandata_preprocessing/y_test.csv
-          echo "1" >> loandata_preprocessing/y_test.csv
+          gdown --id 18CS3o1F78WzsAM0aAzTmWuSdKD4Altn2 -O loandata_preprocessing/X_train_processed.csv
+          gdown --id 1JYMy1L7DYJbSDdKnE67GvuWd7bnN6wRa -O loandata_preprocessing/X_test_processed.csv
+          gdown --id 16U0SCj-QGYzYexLpACHFzKFGMsP8T3VY -O loandata_preprocessing/y_train.csv
+          gdown --id 1qJPGR_jwbKc7tsk6pi7mVdaJpQLkgPmv -O loandata_preprocessing/y_test.csv
 
       - name: 🚀 Run MLflow training
         working-directory: ./MLProject

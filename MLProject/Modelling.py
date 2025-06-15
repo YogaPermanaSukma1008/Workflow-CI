@@ -37,6 +37,11 @@ X_test = pd.read_csv("loandata_preprocessing/X_test_processed.csv")
 y_train = pd.read_csv("loandata_preprocessing/y_train.csv").values.ravel()
 y_test = pd.read_csv("loandata_preprocessing/y_test.csv").values.ravel()
 
+print("🔎 Data Shape Info")
+print("X_train:", X_train.shape, "X_test:", X_test.shape)
+print("y_train:", pd.Series(y_train).value_counts())
+print("y_test:", pd.Series(y_test).value_counts())
+
 # ======== 3. Visual Logging ========
 def log_confusion_matrix(cm):
     with tempfile.TemporaryDirectory() as tmp_dir:
