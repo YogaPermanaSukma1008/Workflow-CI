@@ -57,6 +57,12 @@ jobs:
         with:
           name: trained-model
           path: MLProject/models/model.pkl
+      
+      - name: 📤 Upload Mlflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-tracking-data
+          path: MLProject/mlruns
 
       - name: 🐳 Build Docker image
         uses: docker/build-push-action@v5
