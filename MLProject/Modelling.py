@@ -15,7 +15,8 @@ from mlflow.models.signature import infer_signature
 from mlflow.exceptions import MlflowException
 
 # ========== 1. Setup MLflow dengan DagsHub ==========
-MLFLOW_URI = "https://dagshub.com/YogaPermanaSukma1008/membangun-model.mlflow"
+MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlruns")
+mlflow.set_tracking_uri(MLFLOW_URI)
 mlflow_username = os.environ.get("MLFLOW_USERNAME")
 mlflow_password = os.environ.get("MLFLOW_PASSWORD")
 
