@@ -20,7 +20,20 @@ mlflow_username = os.environ.get("MLFLOW_USERNAME")
 mlflow_password = os.environ.get("MLFLOW_PASSWORD")
 
 if not mlflow_username or not mlflow_password:
-    raise ValueError("❌ MLFLOW credentials not found in environment.")
+    print("⚠️ MLFLOW credentials not found. Melanjutkan dengan tracking lokal...")
+    mlflow.set_tracking_uri("file:///tmp/mlruns")
+    mlflow.set_experiment("Default")
+    run = mlflow.start_run(run_name="RandomForest_Default")
+    print(f"📁 Run ID (lokal): {run.info.run_id}")
+else:
+    os.environ["MLFLOW_USERNAME"] = mlflow_username
+    os.environ["MLFLOW_PASSWORD"] = mlflow_password
+
+    mlflow.set_tracking_uri(MLFLOW_URI)
+    mlflow.set_experiment("Default")
+    run = mlflow.start_run(run_name="RandomForest_Default")
+    print(f"✅ Tracking ke DagsHub berhasil. Run ID: {run.info.run_id}")
+
 
 os.environ["MLFLOW_USERNAME"] = mlflow_username
 os.environ["MLFLOW_PASSWORD"] = mlflow_password
