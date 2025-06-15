@@ -1,8 +1,19 @@
-name: loan-model
+name: loan-default-classifier
 
 conda_env: conda.yaml
 
 entry_points:
-  main:
-    parameters: {}
-    command: "python Modelling.py"
+  train:
+    parameters:
+      x_train_path: {type: str, default: loandata_preprocessing/X_train_processed.csv}
+      x_test_path: {type: str, default: loandata_preprocessing/X_test_processed.csv}
+      y_train_path: {type: str, default: loandata_preprocessing/y_train.csv}
+      y_test_path: {type: str, default: loandata_preprocessing/y_test.csv}
+      model_output: {type: str, default: output/model.pkl}
+    command: >
+      python modelling.py
+      --x_train_path {x_train_path}
+      --x_test_path {x_test_path}
+      --y_train_path {y_train_path}
+      --y_test_path {y_test_path}
+      --model_output {model_output}

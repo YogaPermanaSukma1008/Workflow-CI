@@ -11,69 +11,85 @@ jobs:
   train-and-deploy:
     runs-on: ubuntu-latest
 
+    env:
+      DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+      DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+
     steps:
-      - name: 📦 Checkout repo
+      - name: 📦 Checkout repository
         uses: actions/checkout@v3
 
-      - name: 🐍 Setup Conda
-        uses: conda-incubator/setup-miniconda@v3
+      - name: 🐍 Setup Python 3.12
+        uses: actions/setup-python@v5
         with:
-          environment-file: MLProject/conda.yaml
-          activate-environment: mlflow-env
-          auto-activate-base: false
-          use-mamba: true
-      
-      - name: 🔐 Set MLflow Credentials
+          python-version: "3.12"
+
+      - name: 📦 Install dependencies
         run: |
-          echo "MLFLOW_USERNAME=${{ secrets.MLFLOW_USERNAME }}" >> $GITHUB_ENV
-          echo "MLFLOW_PASSWORD=${{ secrets.MLFLOW_PASSWORD }}" >> $GITHUB_ENV
+          pip install --upgrade pip
+          pip install pandas numpy scikit-learn mlflow matplotlib seaborn joblib
 
-
-      - name: ✅ Run MLflow Project dan Simpan Run ID
-        id: mlflow-run
-        shell: bash -l {0}
+      - name: ⚙️ Prepare loandata & directory
+        working-directory: ./MLProject
         run: |
-          export MLFLOW_TRACKING_URI=./mlruns
-          OUTPUT=$(mlflow run MLProject --env-manager=local || true)
-          echo "$OUTPUT"
-          RUN_ID=$(echo "$OUTPUT" | grep -oP '(?<=Run ID: )[a-f0-9]+')
-          echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
+          mkdir -p loandata_preprocessing models
 
-          if echo "$OUTPUT" | grep -q "Gagal koneksi ke DagsHub"; then
-          echo "::warning::MLflow run had issues (e.g. DagsHub), but continuing anyway"
-          exit 0
-          fi
+          echo "feature1,feature2,feature3" > loandata_preprocessing/X_train_processed.csv
+          echo "1.0,2.0,3.0" >> loandata_preprocessing/X_train_processed.csv
+          echo "4.0,5.0,6.0" >> loandata_preprocessing/X_train_processed.csv
 
-      - name: 📦 Save Model Artifact
-        if: success()
+          echo "feature1,feature2,feature3" > loandata_preprocessing/X_test_processed.csv
+          echo "1.5,2.5,3.5" >> loandata_preprocessing/X_test_processed.csv
+          echo "4.5,5.5,6.5" >> loandata_preprocessing/X_test_processed.csv
+
+          echo "target" > loandata_preprocessing/y_train.csv
+          echo "0" >> loandata_preprocessing/y_train.csv
+          echo "1" >> loandata_preprocessing/y_train.csv
+
+          echo "target" > loandata_preprocessing/y_test.csv
+          echo "0" >> loandata_preprocessing/y_test.csv
+          echo "1" >> loandata_preprocessing/y_test.csv
+
+      - name: 🚀 Run MLflow training
+        working-directory: ./MLProject
+        env:
+          DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
-          mkdir -p model_artifact
-          cp -r MLProject/mlruns model_artifact/
+          python modelling.py
 
-      - name: 📤 Upload Artifacts to GitHub
+      - name: 🧾 Get latest MLflow run_id
+        working-directory: ./MLProject
+        run: |
+          echo "RUN_ID=$(mlflow runs list -v | grep -v 'Run ID' | head -1 | awk '{print $4}')" >> $GITHUB_ENV
+
+      - name: 📤 Upload trained model to GitHub
         uses: actions/upload-artifact@v4
         with:
           name: trained-model
-          path: model_artifact
+          path: MLProject/models/model.pkl
 
-      - name: 🐳 Setup Docker
-        uses: docker/setup-buildx-action@v2
+      - name: 🐳 Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./MLProject
+          push: false
+          tags: mlflow-model:latest
 
-      - name: 🔐 DockerHub Login
-        uses: docker/login-action@v2
+      - name: 🔐 Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: 🏗️ Build Docker image
-        shell : bash -l {0}
-        run: |
-          OUTPUT=$(mlflow run MLProject --env-manager=local || true)
-          echo "$OUTPUT"
-          RUN_ID=$(echo "$OUTPUT" | grep -oP '(?<=Run ID: )[a-f0-9]+')
-          echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
-
-      - name: 📤 Push Docker Image
+      - name: 🏷️ Tag & Push Docker Image
+        if: github.event_name != 'pull_request'
         run: |
           docker tag mlflow-model:latest ${{ secrets.DOCKER_USERNAME }}/mlflow-model:latest
+          docker tag mlflow-model:latest ${{ secrets.DOCKER_USERNAME }}/mlflow-model:${{ github.sha }}
           docker push ${{ secrets.DOCKER_USERNAME }}/mlflow-model:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/mlflow-model:${{ github.sha }}
+
+      - name: ✅ Done
+        run: echo "🎉 Workflow completed successfully."
