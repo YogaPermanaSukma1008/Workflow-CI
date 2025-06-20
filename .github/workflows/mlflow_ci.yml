@@ -1,0 +1,99 @@
+name: MLflow Dual Tracking CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  train-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+      DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+      MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/MLProject/mlruns"
+
+    steps:
+      - name: 📦 Checkout repository
+        uses: actions/checkout@v3
+
+      - name: 🐍 Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pandas numpy scikit-learn mlflow matplotlib seaborn joblib gdown dagshub
+
+      - name: ⚙️ Setup MLflow Tracking
+        run: |
+          mkdir -p ${{ github.workspace }}/MLProject/mlruns
+          echo "MLFLOW_TRACKING_URI=file://${{ github.workspace }}/MLProject/mlruns" >> $GITHUB_ENV
+          echo "PROJECT_ROOT=${{ github.workspace }}/MLProject" >> $GITHUB_ENV
+
+      - name: ⬇️ Download Data
+        working-directory: ./MLProject
+        run: |
+          mkdir -p loandata_preprocessing models
+
+          gdown --id 18CS3o1F78WzsAM0aAzTmWuSdKD4Altn2 -O loandata_preprocessing/X_train_processed.csv
+          gdown --id 1JYMy1L7DYJbSDdKnE67GvuWd7bnN6wRa -O loandata_preprocessing/X_test_processed.csv
+          gdown --id 16U0SCj-QGYzYexLpACHFzKFGMsP8T3VY -O loandata_preprocessing/y_train.csv
+          gdown --id 1qJPGR_jwbKc7tsk6pi7mVdaJpQLkgPmv -O loandata_preprocessing/y_test.csv
+
+      - name: 🚀 Run MLflow training via MLproject
+        working-directory: ./MLProject
+        env:
+          DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+          MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/MLProject/mlruns"
+        run: |
+          mlflow run . --env-manager=local
+
+      - name: 🧾 Get latest MLflow run_id
+        working-directory: ./MLProject
+        run: |
+          echo "RUN_ID=$(mlflow runs list -v | grep -v 'Run ID' | head -1 | awk '{print $4}')" >> $GITHUB_ENV
+
+      - name: 📤 Upload trained model
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model
+          path: MLProject/output/model.pkl
+
+      - name: 📤 Upload all MLflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-artifacts
+          path: |
+            MLProject/mlruns
+            MLProject/output
+
+      - name: 🐳 Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./MLProject
+          push: false
+          tags: ml_flow:latest
+
+      - name: 🔐 Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 🏷️ Tag & Push Docker Image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker tag ml_flow:latest ${{ secrets.DOCKER_USERNAME }}/ml_flow:latest
+          docker tag ml_flow:latest ${{ secrets.DOCKER_USERNAME }}/ml_flow:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/ml_flow:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/ml_flow:${{ github.sha }}
+
+      - name: ✅ Done
+        run: echo "🎉 Workflow completed successfully."
