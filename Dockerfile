@@ -45,4 +45,4 @@ RUN mkdir -p mlruns output
 # Entrypoint and CMD
 # ================================
 ENTRYPOINT ["python", "-u"]
-CMD ["Modelling.py"]
+CMD ["python", "Modelling.py"]
