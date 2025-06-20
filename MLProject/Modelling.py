@@ -90,7 +90,7 @@ def dual_logging(metrics, artifacts, model=None, X_sample=None):
     # --- LOCAL LOGGING ---
     mlflow.set_tracking_uri(local_uri)
     mlflow.set_experiment(experiment_name)
-    with mlflow.start_run(run_name="Local_RF") as local_run:
+    with mlflow.start_run(run_name="Local_RF", nested=True) as local_run:
         for k, v in metrics.items():
             mlflow.log_metric(k, v)
         for art in artifacts:
