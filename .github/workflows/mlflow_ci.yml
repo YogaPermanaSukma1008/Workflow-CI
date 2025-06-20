@@ -57,7 +57,7 @@ jobs:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
           MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/MLProject/mlruns"
         run: |
-          mlflow run . --env-manager=default
+          mlflow run . --env-manager=local --experiment-name="default"
 
       - name: 🧾 Get latest MLflow run_id
         working-directory: ./MLProject
