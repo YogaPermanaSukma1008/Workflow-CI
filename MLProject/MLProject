@@ -11,7 +11,7 @@ entry_points:
       y_test_path: {type: str, default: loandata_preprocessing/y_test.csv}
       model_output: {type: str, default: output/model.pkl}
     command: >
-      python modelling.py
+      python Modelling.py
       --x_train_path {x_train_path}
       --x_test_path {x_test_path}
       --y_train_path {y_train_path}
