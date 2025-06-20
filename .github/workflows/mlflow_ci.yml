@@ -48,7 +48,7 @@ jobs:
       - name: 🧪 Create MLflow experiment (if not exists)
         working-directory: ./MLProject
         run: |
-          mlflow experiments create --experiment-name "default" || echo "Experiment already exists"
+          mlflow experiments create --experiment-name "RandomForest_DualTracking" || echo "Experiment already exists"
 
       - name: 🚀 Run MLflow training via MLproject
         working-directory: ./MLProject
@@ -57,7 +57,7 @@ jobs:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
           MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/MLProject/mlruns"
         run: |
-          mlflow run . --env-manager=local --experiment-name="default"
+          mlflow run . --env-manager=local --experiment-name="RandomForest_DualTracking"
 
       - name: 🧾 Get latest MLflow run_id
         working-directory: ./MLProject
